@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  flyway:
+    enabled: false
+
+# Apache Camel test configuration
+camel:
+  springboot:
+    name: abbreviatedtaxinvoice-processing-camel-test
+  dataformat:
+    jackson:
+      auto-discover-object-mapper: true
+
+# Application-specific configuration (test topics)
+app:
+  kafka:
+    bootstrap-servers: localhost:9093
+    topics:
+      abbreviated-taxinvoice-processed: abbreviated.taxinvoice.processed.test
+      dlq: abbreviated.taxinvoice.processing.dlq.test
+      saga-command-abbreviated-tax-invoice: saga.command.abbreviated-tax-invoice.test
+      saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice.test
+      saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice.test
+
+logging:
+  level:
+    root: WARN
+    com.wpanther.abbreviatedtaxinvoice.processing: INFO
+    org.apache.camel: WARN
