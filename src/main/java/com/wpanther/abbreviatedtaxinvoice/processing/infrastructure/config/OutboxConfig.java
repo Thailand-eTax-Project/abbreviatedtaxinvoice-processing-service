@@ -1,8 +1,10 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence.outbox.JpaOutboxEventRepository;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence.outbox.SpringDataOutboxRepository;
 import com.wpanther.saga.domain.outbox.OutboxEventRepository;
+import com.wpanther.saga.infrastructure.outbox.OutboxService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,5 +16,11 @@ public class OutboxConfig {
     @ConditionalOnMissingBean(OutboxEventRepository.class)
     public OutboxEventRepository outboxEventRepository(SpringDataOutboxRepository springRepository) {
         return new JpaOutboxEventRepository(springRepository);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OutboxService.class)
+    public OutboxService outboxService(OutboxEventRepository repository, ObjectMapper objectMapper) {
+        return new OutboxService(repository, objectMapper);
     }
 }
