@@ -94,6 +94,10 @@ infrastructure/
     └── OutboxConfig.java                                       # UNCHANGED
 
 AbbreviatedTaxInvoiceProcessingServiceApplication.java          # UNCHANGED
+
+src/main/resources/db/migration/
+├── V1__create_schema.sql                                         # UNCHANGED
+└── V2__add_source_invoice_id_unique_constraint.sql               # NEW
 ```
 
 ### Deleted files (replaced by the above)
@@ -260,6 +264,12 @@ Implements `ProcessAbbreviatedTaxInvoiceUseCase` + `CompensateAbbreviatedTaxInvo
 - Renamed from `AbbreviatedTaxInvoiceParserServiceImpl`
 - Method renamed `parseInvoice` → `parse`
 - Throw sites use `AbbreviatedTaxInvoiceParserPort.AbbreviatedTaxInvoiceParsingException` factory methods
+- **Add timeout + semaphore pattern** (matching taxinvoice `TaxInvoiceParserServiceImpl`):
+  - `@Value("${app.parsing.timeout-seconds:10}")` — wall-clock limit per unmarshal call; throws `forTimeout()`
+  - `@Value("${app.parsing.max-concurrent:300}")` — `Semaphore` cap on concurrent unmarshal tasks; prevents OOM under burst load
+  - Unmarshal runs inside a `ExecutorService` (virtual threads or cached pool); `Future.get(timeout, SECONDS)` enforces the limit
+  - `@PreDestroy` shuts down the executor
+  - Size guard: check byte length before unmarshal; throw `forOversized()` if over limit (512 KB / 512,000 bytes)
 
 ### Outbound: `OutboxCleanupScheduler`
 
@@ -356,6 +366,25 @@ app:
 - `infrastructure/adapter/out/parsing/AbbreviatedTaxInvoiceParserAdapterTest` — renamed from `AbbreviatedTaxInvoiceParserServiceImplTest`
 - `infrastructure/adapter/in/messaging/SagaRouteConfigTest` — moved from `infrastructure/config/`
 - New: `infrastructure/adapter/out/persistence/outbox/OutboxCleanupSchedulerTest`
+
+---
+
+## Database Migration
+
+A **V2 migration** is required to add the named unique constraint on `source_invoice_id`. The current V1 schema has only a non-unique index (`idx_abbr_tax_source_invoice_id`). The named constraint is needed so that `AbbreviatedTaxInvoiceProcessingService.isSourceInvoiceIdViolation()` can identify race-condition duplicates by constraint name and SQLState.
+
+```sql
+-- V2__add_source_invoice_id_unique_constraint.sql
+ALTER TABLE processed_abbreviated_tax_invoices
+    ADD CONSTRAINT uq_processed_abbreviated_tax_invoices_source_invoice_id
+    UNIQUE (source_invoice_id);
+
+DROP INDEX IF EXISTS idx_abbr_tax_source_invoice_id;
+```
+
+The `isSourceInvoiceIdViolation()` guard checks:
+1. SQLState `"23505"` (ANSI unique_violation, stable across PostgreSQL and H2)
+2. Constraint name `uq_processed_abbreviated_tax_invoices_source_invoice_id` in the exception message
 
 ---
 
