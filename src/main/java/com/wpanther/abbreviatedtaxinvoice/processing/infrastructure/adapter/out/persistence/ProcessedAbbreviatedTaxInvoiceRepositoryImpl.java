@@ -1,4 +1,4 @@
-package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence;
+package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out.persistence;
 
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.AbbreviatedTaxInvoiceId;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessedAbbreviatedTaxInvoice;

@@ -1,7 +1,7 @@
-package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence;
+package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out.persistence;
 
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.*;
-import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence.AbbreviatedTaxInvoicePartyEntity.PartyType;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out.persistence.AbbreviatedTaxInvoicePartyEntity.PartyType;
 import org.springframework.stereotype.Component;
 
 import java.util.*;

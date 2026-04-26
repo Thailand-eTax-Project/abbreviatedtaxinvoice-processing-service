@@ -1,4 +1,4 @@
-package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.persistence;
+package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out.persistence;
 
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.*;
 import org.junit.jupiter.api.BeforeEach;
