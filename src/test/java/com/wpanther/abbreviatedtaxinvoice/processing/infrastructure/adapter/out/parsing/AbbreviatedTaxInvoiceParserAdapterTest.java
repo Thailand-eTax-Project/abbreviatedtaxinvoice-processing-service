@@ -127,6 +127,78 @@ class AbbreviatedTaxInvoiceParserAdapterTest {
         assertTrue(ex.getMessage().contains("XML parsing failed"));
     }
 
+    // ------------------------------------------------------------------ missing-element variants
+
+    @Test
+    void parse_xmlMissingExchangedDocument_throws() {
+        String xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice
+                xmlns:rsm="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_CrossIndustryInvoice:2"
+                xmlns:ram="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_ReusableAggregateBusinessInformationEntity:2"
+                xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:16"
+                xmlns:qdt="urn:etda:uncefact:data:standard:QualifiedDataType:1">
+              <rsm:ExchangedDocumentContext>
+                <ram:GuidelineSpecifiedDocumentContextParameter>
+                  <ram:ID>urn:etda.or.th:abbreviatedtaxinvoice:2p1</ram:ID>
+                </ram:GuidelineSpecifiedDocumentContextParameter>
+              </rsm:ExchangedDocumentContext>
+            </rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice>
+            """;
+
+        var ex = assertThrows(AbbreviatedTaxInvoiceParserPort.AbbreviatedTaxInvoiceParsingException.class,
+                () -> parser.parse(xml, "src-1"));
+        assertTrue(ex.getMessage().contains("ExchangedDocument"));
+    }
+
+    @Test
+    void parse_xmlMissingSupplyChainTradeTransaction_throws() {
+        String xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice
+                xmlns:rsm="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_CrossIndustryInvoice:2"
+                xmlns:ram="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_ReusableAggregateBusinessInformationEntity:2"
+                xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:16"
+                xmlns:qdt="urn:etda:uncefact:data:standard:QualifiedDataType:1">
+              <rsm:ExchangedDocumentContext>
+                <ram:GuidelineSpecifiedDocumentContextParameter>
+                  <ram:ID>urn:etda.or.th:abbreviatedtaxinvoice:2p1</ram:ID>
+                </ram:GuidelineSpecifiedDocumentContextParameter>
+              </rsm:ExchangedDocumentContext>
+              <rsm:ExchangedDocument>
+                <ram:ID>ABR2025-00001</ram:ID>
+                <ram:TypeCode>388</ram:TypeCode>
+                <ram:IssueDateTime>2025-01-15T00:00:00</ram:IssueDateTime>
+              </rsm:ExchangedDocument>
+            </rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice>
+            """;
+
+        var ex = assertThrows(AbbreviatedTaxInvoiceParserPort.AbbreviatedTaxInvoiceParsingException.class,
+                () -> parser.parse(xml, "src-1"));
+        assertTrue(ex.getMessage().contains("SupplyChainTradeTransaction"));
+    }
+
+    @Test
+    void parse_xmlWithoutDueDate_defaultsToIssueDatePlus30()
+            throws AbbreviatedTaxInvoiceParserPort.AbbreviatedTaxInvoiceParsingException {
+        String xml = sampleXmlWithoutDueDate();
+
+        ProcessedAbbreviatedTaxInvoice invoice = parser.parse(xml, "src-no-due");
+
+        assertEquals(LocalDate.of(2025, 1, 15).plusDays(30), invoice.getDueDate());
+    }
+
+    @Test
+    void parse_xmlWithSellerEmail_mapsEmail()
+            throws AbbreviatedTaxInvoiceParserPort.AbbreviatedTaxInvoiceParsingException {
+        String xml = sampleXmlWithEmail();
+
+        ProcessedAbbreviatedTaxInvoice invoice = parser.parse(xml, "src-email");
+
+        assertNotNull(invoice.getSeller());
+        assertEquals("seller@test.com", invoice.getSeller().email());
+    }
+
     // ------------------------------------------------------------------ sample XML
 
     private String sampleXml() {
@@ -206,6 +278,138 @@ class AbbreviatedTaxInvoiceParserAdapterTest {
                   <ram:SpecifiedLineTradeAgreement>
                     <ram:GrossPriceProductTradePrice>
                       <ram:ChargeAmount>10000.00</ram:ChargeAmount>
+                    </ram:GrossPriceProductTradePrice>
+                  </ram:SpecifiedLineTradeAgreement>
+                  <ram:SpecifiedLineTradeDelivery>
+                    <ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity>
+                  </ram:SpecifiedLineTradeDelivery>
+                  <ram:SpecifiedLineTradeSettlement>
+                    <ram:ApplicableTradeTax>
+                      <ram:TypeCode>VAT</ram:TypeCode>
+                      <ram:CalculatedRate>7.00</ram:CalculatedRate>
+                    </ram:ApplicableTradeTax>
+                  </ram:SpecifiedLineTradeSettlement>
+                </ram:IncludedSupplyChainTradeLineItem>
+              </rsm:SupplyChainTradeTransaction>
+            </rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice>
+            """;
+    }
+
+    private String sampleXmlWithoutDueDate() {
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice
+                xmlns:rsm="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_CrossIndustryInvoice:2"
+                xmlns:ram="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_ReusableAggregateBusinessInformationEntity:2"
+                xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:16"
+                xmlns:qdt="urn:etda:uncefact:data:standard:QualifiedDataType:1">
+              <rsm:ExchangedDocumentContext>
+                <ram:GuidelineSpecifiedDocumentContextParameter>
+                  <ram:ID>urn:etda.or.th:abbreviatedtaxinvoice:2p1</ram:ID>
+                </ram:GuidelineSpecifiedDocumentContextParameter>
+              </rsm:ExchangedDocumentContext>
+              <rsm:ExchangedDocument>
+                <ram:ID>ABR2025-ND01</ram:ID>
+                <ram:TypeCode>388</ram:TypeCode>
+                <ram:IssueDateTime>2025-01-15T00:00:00</ram:IssueDateTime>
+              </rsm:ExchangedDocument>
+              <rsm:SupplyChainTradeTransaction>
+                <ram:ApplicableHeaderTradeAgreement>
+                  <ram:SellerTradeParty>
+                    <ram:Name>Test Seller</ram:Name>
+                    <ram:PostalTradeAddress>
+                      <ram:LineOne>1 Street</ram:LineOne>
+                      <ram:CityName>Bangkok</ram:CityName>
+                      <ram:PostcodeCode>10100</ram:PostcodeCode>
+                      <ram:CountryID>TH</ram:CountryID>
+                    </ram:PostalTradeAddress>
+                    <ram:SpecifiedTaxRegistration>
+                      <ram:ID schemeID="VAT">1111111111111</ram:ID>
+                    </ram:SpecifiedTaxRegistration>
+                  </ram:SellerTradeParty>
+                </ram:ApplicableHeaderTradeAgreement>
+                <ram:ApplicableHeaderTradeSettlement>
+                  <ram:InvoiceCurrencyCode>THB</ram:InvoiceCurrencyCode>
+                </ram:ApplicableHeaderTradeSettlement>
+                <ram:IncludedSupplyChainTradeLineItem>
+                  <ram:AssociatedDocumentLineDocument>
+                    <ram:LineID>1</ram:LineID>
+                  </ram:AssociatedDocumentLineDocument>
+                  <ram:SpecifiedTradeProduct>
+                    <ram:Name>Item A</ram:Name>
+                  </ram:SpecifiedTradeProduct>
+                  <ram:SpecifiedLineTradeAgreement>
+                    <ram:GrossPriceProductTradePrice>
+                      <ram:ChargeAmount>1000.00</ram:ChargeAmount>
+                    </ram:GrossPriceProductTradePrice>
+                  </ram:SpecifiedLineTradeAgreement>
+                  <ram:SpecifiedLineTradeDelivery>
+                    <ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity>
+                  </ram:SpecifiedLineTradeDelivery>
+                  <ram:SpecifiedLineTradeSettlement>
+                    <ram:ApplicableTradeTax>
+                      <ram:TypeCode>VAT</ram:TypeCode>
+                      <ram:CalculatedRate>7.00</ram:CalculatedRate>
+                    </ram:ApplicableTradeTax>
+                  </ram:SpecifiedLineTradeSettlement>
+                </ram:IncludedSupplyChainTradeLineItem>
+              </rsm:SupplyChainTradeTransaction>
+            </rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice>
+            """;
+    }
+
+    private String sampleXmlWithEmail() {
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rsm:AbbreviatedTaxInvoice_CrossIndustryInvoice
+                xmlns:rsm="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_CrossIndustryInvoice:2"
+                xmlns:ram="urn:etda:uncefact:data:standard:AbbreviatedTaxInvoice_ReusableAggregateBusinessInformationEntity:2"
+                xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:16"
+                xmlns:qdt="urn:etda:uncefact:data:standard:QualifiedDataType:1">
+              <rsm:ExchangedDocumentContext>
+                <ram:GuidelineSpecifiedDocumentContextParameter>
+                  <ram:ID>urn:etda.or.th:abbreviatedtaxinvoice:2p1</ram:ID>
+                </ram:GuidelineSpecifiedDocumentContextParameter>
+              </rsm:ExchangedDocumentContext>
+              <rsm:ExchangedDocument>
+                <ram:ID>ABR2025-EM01</ram:ID>
+                <ram:TypeCode>388</ram:TypeCode>
+                <ram:IssueDateTime>2025-01-15T00:00:00</ram:IssueDateTime>
+              </rsm:ExchangedDocument>
+              <rsm:SupplyChainTradeTransaction>
+                <ram:ApplicableHeaderTradeAgreement>
+                  <ram:SellerTradeParty>
+                    <ram:Name>Email Seller</ram:Name>
+                    <ram:DefinedTradeContact>
+                      <ram:PersonName>Contact Person</ram:PersonName>
+                      <ram:EmailURIUniversalCommunication>
+                        <ram:URIID>seller@test.com</ram:URIID>
+                      </ram:EmailURIUniversalCommunication>
+                    </ram:DefinedTradeContact>
+                    <ram:PostalTradeAddress>
+                      <ram:LineOne>1 Street</ram:LineOne>
+                      <ram:CityName>Bangkok</ram:CityName>
+                      <ram:PostcodeCode>10100</ram:PostcodeCode>
+                      <ram:CountryID>TH</ram:CountryID>
+                    </ram:PostalTradeAddress>
+                    <ram:SpecifiedTaxRegistration>
+                      <ram:ID schemeID="VAT">2222222222222</ram:ID>
+                    </ram:SpecifiedTaxRegistration>
+                  </ram:SellerTradeParty>
+                </ram:ApplicableHeaderTradeAgreement>
+                <ram:ApplicableHeaderTradeSettlement>
+                  <ram:InvoiceCurrencyCode>THB</ram:InvoiceCurrencyCode>
+                </ram:ApplicableHeaderTradeSettlement>
+                <ram:IncludedSupplyChainTradeLineItem>
+                  <ram:AssociatedDocumentLineDocument>
+                    <ram:LineID>1</ram:LineID>
+                  </ram:AssociatedDocumentLineDocument>
+                  <ram:SpecifiedTradeProduct>
+                    <ram:Name>Service</ram:Name>
+                  </ram:SpecifiedTradeProduct>
+                  <ram:SpecifiedLineTradeAgreement>
+                    <ram:GrossPriceProductTradePrice>
+                      <ram:ChargeAmount>500.00</ram:ChargeAmount>
                     </ram:GrossPriceProductTradePrice>
                   </ram:SpecifiedLineTradeAgreement>
                   <ram:SpecifiedLineTradeDelivery>
