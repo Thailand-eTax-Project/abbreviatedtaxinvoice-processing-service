@@ -63,6 +63,14 @@ app:
       saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice
       saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice
 
+# Kafka topics configuration (for KafkaTopicsProperties)
+kafka:
+  topics:
+    saga-command-abbreviated-tax-invoice: saga.command.abbreviated-tax-invoice
+    saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice
+    saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice
+    abbreviated-tax-invoice-processed: abbreviated.taxinvoice.processed
+
 # Eureka client configuration
 eureka:
   client:
