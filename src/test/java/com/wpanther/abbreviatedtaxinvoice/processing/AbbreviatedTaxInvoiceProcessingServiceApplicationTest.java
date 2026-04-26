@@ -28,11 +28,10 @@ class AbbreviatedTaxInvoiceProcessingServiceApplicationTest {
 
     @Test
     void testApplicationHasRequiredBeans() {
-        // Then
         assertTrue(applicationContext.containsBean("abbreviatedTaxInvoiceProcessingService"),
             "Should have AbbreviatedTaxInvoiceProcessingService bean");
-        assertTrue(applicationContext.containsBean("eventPublisher"),
-            "Should have EventPublisher bean");
+        assertTrue(applicationContext.containsBean("abbreviatedTaxInvoiceEventPublisher"),
+            "Should have AbbreviatedTaxInvoiceEventPublisher bean");
         assertTrue(applicationContext.containsBean("sagaRouteConfig"),
             "Should have SagaRouteConfig bean");
         assertTrue(applicationContext.containsBean("sagaCommandHandler"),

@@ -70,6 +70,7 @@ kafka:
     saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice
     saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice
     abbreviated-tax-invoice-processed: abbreviated.taxinvoice.processed
+    dlq: abbreviated.taxinvoice.processing.dlq
 
 # Eureka client configuration
 eureka:

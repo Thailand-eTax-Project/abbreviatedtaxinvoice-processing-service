@@ -1,11 +1,10 @@
-package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config;
+package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.wpanther.abbreviatedtaxinvoice.processing.application.service.SagaCommandHandler;
-import com.wpanther.saga.domain.enums.SagaStep;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.saga.domain.enums.SagaStep;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.Route;
@@ -35,7 +34,7 @@ class SagaRouteConfigTest {
     private CamelContext camelContext;
 
     @MockBean
-    private SagaCommandHandler sagaCommandHandler;
+    private com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.SagaCommandHandler sagaCommandHandler;
 
     private ObjectMapper objectMapper;
 
@@ -88,8 +87,9 @@ class SagaRouteConfigTest {
         String json = objectMapper.writeValueAsString(command);
 
         // When
-        ProducerTemplate producer = camelContext.createProducerTemplate();
-        producer.sendBody("direct:saga-command", json);
+        try (ProducerTemplate producer = camelContext.createProducerTemplate()) {
+            producer.sendBody("direct:saga-command", json);
+        }
 
         // Then
         verify(sagaCommandHandler).handleProcessCommand(any(ProcessAbbreviatedTaxInvoiceCommand.class));
@@ -105,8 +105,9 @@ class SagaRouteConfigTest {
         String json = objectMapper.writeValueAsString(command);
 
         // When
-        ProducerTemplate producer = camelContext.createProducerTemplate();
-        producer.sendBody("direct:saga-compensation", json);
+        try (ProducerTemplate producer = camelContext.createProducerTemplate()) {
+            producer.sendBody("direct:saga-compensation", json);
+        }
 
         // Then
         verify(sagaCommandHandler).handleCompensation(any(CompensateAbbreviatedTaxInvoiceCommand.class));

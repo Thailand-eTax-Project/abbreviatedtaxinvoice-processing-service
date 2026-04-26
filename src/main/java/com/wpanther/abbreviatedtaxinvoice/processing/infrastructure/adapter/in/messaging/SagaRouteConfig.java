@@ -1,8 +1,8 @@
-package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config;
+package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging;
 
-import com.wpanther.abbreviatedtaxinvoice.processing.application.service.SagaCommandHandler;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config.KafkaTopicsProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -18,54 +18,72 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SagaRouteConfig extends RouteBuilder {
 
+    private static final String GROUP_ID = "abbreviatedtaxinvoice-processing-service";
+
     private final SagaCommandHandler sagaCommandHandler;
+    private final KafkaTopicsProperties topics;
 
     @Value("${app.kafka.bootstrap-servers}")
     private String kafkaBrokers;
 
-    @Value("${app.kafka.topics.saga-command-abbreviated-tax-invoice}")
-    private String sagaCommandTopic;
+    @Value("${app.camel.retry.max-redeliveries:3}")
+    private int maxRedeliveries;
 
-    @Value("${app.kafka.topics.saga-compensation-abbreviated-tax-invoice}")
-    private String sagaCompensationTopic;
+    @Value("${app.camel.retry.redelivery-delay-ms:1000}")
+    private long redeliveryDelayMs;
 
-    @Value("${app.kafka.topics.dlq:abbreviated.taxinvoice.processing.dlq}")
-    private String dlqTopic;
+    @Value("${app.camel.retry.backoff-multiplier:2.0}")
+    private double backoffMultiplier;
 
-    public SagaRouteConfig(SagaCommandHandler sagaCommandHandler) {
+    @Value("${app.camel.retry.max-redelivery-delay-ms:10000}")
+    private long maxRedeliveryDelayMs;
+
+    @Value("${app.kafka.consumers.max-poll-records:100}")
+    private int maxPollRecords;
+
+    @Value("${app.kafka.consumers.count:3}")
+    private int consumersCount;
+
+    public SagaRouteConfig(SagaCommandHandler sagaCommandHandler, KafkaTopicsProperties topics) {
         this.sagaCommandHandler = sagaCommandHandler;
+        this.topics = topics;
+    }
+
+    /**
+     * Build common Kafka consumer parameters.
+     */
+    private String kafkaConsumerParams() {
+        return "?brokers=RAW(" + kafkaBrokers + ")"
+                + "&groupId=" + GROUP_ID
+                + "&autoOffsetReset=earliest"
+                + "&autoCommitEnable=false"
+                + "&breakOnFirstError=true"
+                + "&maxPollRecords=" + maxPollRecords
+                + "&consumersCount=" + consumersCount;
     }
 
     @Override
     public void configure() throws Exception {
 
         // Global error handler - Dead Letter Channel with retries
-        errorHandler(deadLetterChannel("kafka:" + dlqTopic + "?brokers=" + kafkaBrokers)
-            .maximumRedeliveries(3)
-            .redeliveryDelay(1000)
+        errorHandler(deadLetterChannel("kafka:" + topics.getDlq() + "?brokers=RAW(" + kafkaBrokers + ")")
+            .maximumRedeliveries(maxRedeliveries)
+            .redeliveryDelay(redeliveryDelayMs)
             .useExponentialBackOff()
-            .backOffMultiplier(2)
-            .maximumRedeliveryDelay(10000)
+            .backOffMultiplier(backoffMultiplier)
+            .maximumRedeliveryDelay(maxRedeliveryDelayMs)
             .logExhausted(true)
             .logStackTrace(true));
 
         // ============================================================
         // CONSUMER ROUTE: saga.command.abbreviated-tax-invoice (from orchestrator)
         // ============================================================
-        from("kafka:" + sagaCommandTopic
-                + "?brokers=" + kafkaBrokers
-                + "&groupId=abbreviatedtaxinvoice-processing-service"
-                + "&autoOffsetReset=earliest"
-                + "&autoCommitEnable=false"
-                + "&breakOnFirstError=true"
-                + "&maxPollRecords=100"
-                + "&consumersCount=3")
+        from("kafka:" + topics.getSagaCommandAbbreviatedTaxInvoice() + kafkaConsumerParams())
             .routeId("saga-command-consumer")
             .log("Received saga command from Kafka: partition=${header[kafka.PARTITION]}, offset=${header[kafka.OFFSET]}")
             .unmarshal().json(JsonLibrary.Jackson, ProcessAbbreviatedTaxInvoiceCommand.class)
             .process(exchange -> {
-                ProcessAbbreviatedTaxInvoiceCommand cmd =
-                    exchange.getIn().getBody(ProcessAbbreviatedTaxInvoiceCommand.class);
+                ProcessAbbreviatedTaxInvoiceCommand cmd = exchange.getIn().getBody(ProcessAbbreviatedTaxInvoiceCommand.class);
                 log.info("Processing saga command for saga: {}, invoice: {}",
                     cmd.getSagaId(), cmd.getInvoiceNumber());
                 sagaCommandHandler.handleProcessCommand(cmd);
@@ -75,20 +93,12 @@ public class SagaRouteConfig extends RouteBuilder {
         // ============================================================
         // CONSUMER ROUTE: saga.compensation.abbreviated-tax-invoice (from orchestrator)
         // ============================================================
-        from("kafka:" + sagaCompensationTopic
-                + "?brokers=" + kafkaBrokers
-                + "&groupId=abbreviatedtaxinvoice-processing-service"
-                + "&autoOffsetReset=earliest"
-                + "&autoCommitEnable=false"
-                + "&breakOnFirstError=true"
-                + "&maxPollRecords=100"
-                + "&consumersCount=3")
+        from("kafka:" + topics.getSagaCompensationAbbreviatedTaxInvoice() + kafkaConsumerParams())
             .routeId("saga-compensation-consumer")
             .log("Received compensation command from Kafka: partition=${header[kafka.PARTITION]}, offset=${header[kafka.OFFSET]}")
             .unmarshal().json(JsonLibrary.Jackson, CompensateAbbreviatedTaxInvoiceCommand.class)
             .process(exchange -> {
-                CompensateAbbreviatedTaxInvoiceCommand cmd =
-                    exchange.getIn().getBody(CompensateAbbreviatedTaxInvoiceCommand.class);
+                CompensateAbbreviatedTaxInvoiceCommand cmd = exchange.getIn().getBody(CompensateAbbreviatedTaxInvoiceCommand.class);
                 log.info("Processing compensation for saga: {}, document: {}",
                     cmd.getSagaId(), cmd.getDocumentId());
                 sagaCommandHandler.handleCompensation(cmd);

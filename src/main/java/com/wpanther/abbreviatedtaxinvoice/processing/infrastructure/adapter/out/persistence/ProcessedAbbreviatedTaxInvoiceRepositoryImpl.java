@@ -3,7 +3,7 @@ package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.AbbreviatedTaxInvoiceId;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessedAbbreviatedTaxInvoice;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessingStatus;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.repository.ProcessedAbbreviatedTaxInvoiceRepository;
+import com.wpanther.abbreviatedtaxinvoice.processing.domain.port.out.ProcessedAbbreviatedTaxInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

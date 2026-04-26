@@ -1,7 +1,7 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.out.persistence;
 
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.*;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.repository.ProcessedAbbreviatedTaxInvoiceRepository;
+import com.wpanther.abbreviatedtaxinvoice.processing.domain.port.out.ProcessedAbbreviatedTaxInvoiceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -35,6 +35,18 @@ app:
       saga-command-abbreviated-tax-invoice: saga.command.abbreviated-tax-invoice.test
       saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice.test
       saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice.test
+    consumers:
+      max-poll-records: 10
+      count: 1
+
+# Kafka topics configuration (for KafkaTopicsProperties)
+kafka:
+  topics:
+    saga-command-abbreviated-tax-invoice: saga.command.abbreviated-tax-invoice.test
+    saga-reply-abbreviated-tax-invoice: saga.reply.abbreviated-tax-invoice.test
+    saga-compensation-abbreviated-tax-invoice: saga.compensation.abbreviated-tax-invoice.test
+    abbreviated-tax-invoice-processed: abbreviated.taxinvoice.processed.test
+    dlq: abbreviated.taxinvoice.processing.dlq.test
 
 logging:
   level:
