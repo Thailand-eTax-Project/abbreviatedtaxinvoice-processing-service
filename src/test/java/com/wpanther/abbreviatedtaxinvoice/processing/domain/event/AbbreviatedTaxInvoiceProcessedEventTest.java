@@ -1,6 +1,7 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.domain.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wpanther.abbreviatedtaxinvoice.processing.application.dto.event.AbbreviatedTaxInvoiceProcessedEvent;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -8,24 +9,24 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for AbbreviatedTaxInvoiceProcessedEvent
+ * Unit tests for AbbreviatedTaxInvoiceProcessedEvent (application layer Kafka DTO)
  */
 class AbbreviatedTaxInvoiceProcessedEventTest {
 
     @Test
     void testCreateEvent() {
-        String invoiceId = "abrinvoice-123";
+        String documentId = "abrinvoice-123";
         String invoiceNumber = "ABR-001";
         BigDecimal total = new BigDecimal("10000.00");
         String currency = "THB";
         String correlationId = "correlation-123";
 
         AbbreviatedTaxInvoiceProcessedEvent event = new AbbreviatedTaxInvoiceProcessedEvent(
-            invoiceId, invoiceNumber, total, currency, correlationId
+            documentId, invoiceNumber, total, currency, correlationId
         );
 
         assertNotNull(event);
-        assertEquals(invoiceId, event.getInvoiceId());
+        assertEquals(documentId, event.getDocumentId());
         assertEquals(invoiceNumber, event.getInvoiceNumber());
         assertEquals(total, event.getTotal());
         assertEquals(currency, event.getCurrency());
@@ -53,7 +54,7 @@ class AbbreviatedTaxInvoiceProcessedEventTest {
             objectMapper.readValue(json, AbbreviatedTaxInvoiceProcessedEvent.class);
 
         assertEquals(event.getEventId(), deserialized.getEventId());
-        assertEquals(event.getInvoiceId(), deserialized.getInvoiceId());
+        assertEquals(event.getDocumentId(), deserialized.getDocumentId());
         assertEquals(event.getInvoiceNumber(), deserialized.getInvoiceNumber());
         assertEquals(event.getTotal(), deserialized.getTotal());
         assertEquals(event.getCurrency(), deserialized.getCurrency());

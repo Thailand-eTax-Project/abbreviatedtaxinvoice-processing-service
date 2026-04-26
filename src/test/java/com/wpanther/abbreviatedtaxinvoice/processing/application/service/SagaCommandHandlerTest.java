@@ -1,7 +1,8 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.application.service;
 
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.CompensateAbbreviatedTaxInvoiceCommand;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.saga.domain.enums.SagaStep;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.*;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.repository.ProcessedAbbreviatedTaxInvoiceRepository;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.service.AbbreviatedTaxInvoiceParserService;
@@ -42,12 +43,12 @@ class SagaCommandHandlerTest {
     @BeforeEach
     void setUp() {
         validCommand = new ProcessAbbreviatedTaxInvoiceCommand(
-            "saga-1", "process-abbreviated-tax-invoice", "corr-1",
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1",
             "doc-1", "<xml>test</xml>", "ABR-001"
         );
 
         compensateCommand = new CompensateAbbreviatedTaxInvoiceCommand(
-            "saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1",
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1",
             "process-abbreviated-tax-invoice", "doc-1", "abbreviated-tax-invoice"
         );
 
@@ -78,7 +79,7 @@ class SagaCommandHandlerTest {
         handler.handleProcessCommand(validCommand);
 
         verify(processingService).processInvoiceForSaga("doc-1", "<xml>test</xml>", "corr-1");
-        verify(sagaReplyPublisher).publishSuccess("saga-1", "process-abbreviated-tax-invoice", "corr-1");
+        verify(sagaReplyPublisher).publishSuccess("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1");
         verify(sagaReplyPublisher, never()).publishFailure(any(), any(), any(), any());
     }
 
@@ -89,7 +90,7 @@ class SagaCommandHandlerTest {
 
         handler.handleProcessCommand(validCommand);
 
-        verify(sagaReplyPublisher).publishFailure("saga-1", "process-abbreviated-tax-invoice", "corr-1", "Parse error");
+        verify(sagaReplyPublisher).publishFailure("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1", "Parse error");
         verify(sagaReplyPublisher, never()).publishSuccess(any(), any(), any());
     }
 
@@ -100,7 +101,7 @@ class SagaCommandHandlerTest {
 
         handler.handleProcessCommand(validCommand);
 
-        verify(sagaReplyPublisher).publishFailure("saga-1", "process-abbreviated-tax-invoice", "corr-1", "DB error");
+        verify(sagaReplyPublisher).publishFailure("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1", "DB error");
         verify(sagaReplyPublisher, never()).publishSuccess(any(), any(), any());
     }
 
@@ -111,7 +112,7 @@ class SagaCommandHandlerTest {
         handler.handleCompensation(compensateCommand);
 
         verify(invoiceRepository).deleteById(validInvoice.getId());
-        verify(sagaReplyPublisher).publishCompensated("saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1");
+        verify(sagaReplyPublisher).publishCompensated("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1");
         verify(sagaReplyPublisher, never()).publishFailure(any(), any(), any(), any());
     }
 
@@ -122,7 +123,7 @@ class SagaCommandHandlerTest {
         handler.handleCompensation(compensateCommand);
 
         verify(invoiceRepository, never()).deleteById(any());
-        verify(sagaReplyPublisher).publishCompensated("saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1");
+        verify(sagaReplyPublisher).publishCompensated("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1");
     }
 
     @Test
@@ -133,7 +134,7 @@ class SagaCommandHandlerTest {
         handler.handleCompensation(compensateCommand);
 
         verify(sagaReplyPublisher).publishFailure(
-            eq("saga-1"), eq("COMPENSATE_process-abbreviated-tax-invoice"), eq("corr-1"),
+            eq("saga-1"), eq(SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE), eq("corr-1"),
             contains("Compensation failed")
         );
         verify(sagaReplyPublisher, never()).publishCompensated(any(), any(), any());

@@ -1,6 +1,6 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.application.service;
 
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.AbbreviatedTaxInvoiceProcessedEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.application.dto.event.AbbreviatedTaxInvoiceProcessedEvent;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.AbbreviatedTaxInvoiceId;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessedAbbreviatedTaxInvoice;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessingStatus;

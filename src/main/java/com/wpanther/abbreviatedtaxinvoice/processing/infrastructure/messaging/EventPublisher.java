@@ -1,9 +1,8 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.AbbreviatedTaxInvoiceProcessedEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.application.dto.event.AbbreviatedTaxInvoiceProcessedEvent;
 import com.wpanther.saga.infrastructure.outbox.OutboxService;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config.HeaderSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,7 @@ import java.util.Map;
 public class EventPublisher {
 
     private final OutboxService outboxService;
-    private final ObjectMapper objectMapper;
+    private final HeaderSerializer headerSerializer;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void publishAbbreviatedTaxInvoiceProcessed(AbbreviatedTaxInvoiceProcessedEvent event) {
@@ -30,21 +29,12 @@ public class EventPublisher {
         outboxService.saveWithRouting(
             event,
             "ProcessedAbbreviatedTaxInvoice",
-            event.getInvoiceId(),
+            event.getDocumentId(),
             "abbreviated.taxinvoice.processed",
-            event.getInvoiceId(),
-            toJson(headers)
+            event.getDocumentId(),
+            headerSerializer.toJson(headers)
         );
 
         log.info("Published AbbreviatedTaxInvoiceProcessedEvent to outbox: {}", event.getInvoiceNumber());
-    }
-
-    private String toJson(Map<String, String> map) {
-        try {
-            return objectMapper.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize headers to JSON", e);
-            return null;
-        }
     }
 }

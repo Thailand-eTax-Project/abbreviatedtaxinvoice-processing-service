@@ -1,8 +1,8 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.AbbreviatedTaxInvoiceReplyEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config.HeaderSerializer;
+import com.wpanther.saga.domain.enums.SagaStep;
 import com.wpanther.saga.infrastructure.outbox.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
-/**
- * Publishes saga reply events via the outbox pattern.
- * Replies are sent to the orchestrator via saga.reply.abbreviated-tax-invoice topic.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -25,10 +21,10 @@ public class SagaReplyPublisher {
     private static final String AGGREGATE_TYPE = "ProcessedAbbreviatedTaxInvoice";
 
     private final OutboxService outboxService;
-    private final ObjectMapper objectMapper;
+    private final HeaderSerializer headerSerializer;
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void publishSuccess(String sagaId, String sagaStep, String correlationId) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publishSuccess(String sagaId, SagaStep sagaStep, String correlationId) {
         AbbreviatedTaxInvoiceReplyEvent reply =
             AbbreviatedTaxInvoiceReplyEvent.success(sagaId, sagaStep, correlationId);
 
@@ -44,14 +40,14 @@ public class SagaReplyPublisher {
             sagaId,
             REPLY_TOPIC,
             sagaId,
-            toJson(headers)
+            headerSerializer.toJson(headers)
         );
 
         log.info("Published SUCCESS saga reply for saga {} step {}", sagaId, sagaStep);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void publishFailure(String sagaId, String sagaStep, String correlationId, String errorMessage) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publishFailure(String sagaId, SagaStep sagaStep, String correlationId, String errorMessage) {
         AbbreviatedTaxInvoiceReplyEvent reply =
             AbbreviatedTaxInvoiceReplyEvent.failure(sagaId, sagaStep, correlationId, errorMessage);
 
@@ -67,14 +63,14 @@ public class SagaReplyPublisher {
             sagaId,
             REPLY_TOPIC,
             sagaId,
-            toJson(headers)
+            headerSerializer.toJson(headers)
         );
 
         log.info("Published FAILURE saga reply for saga {} step {}: {}", sagaId, sagaStep, errorMessage);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void publishCompensated(String sagaId, String sagaStep, String correlationId) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publishCompensated(String sagaId, SagaStep sagaStep, String correlationId) {
         AbbreviatedTaxInvoiceReplyEvent reply =
             AbbreviatedTaxInvoiceReplyEvent.compensated(sagaId, sagaStep, correlationId);
 
@@ -90,18 +86,9 @@ public class SagaReplyPublisher {
             sagaId,
             REPLY_TOPIC,
             sagaId,
-            toJson(headers)
+            headerSerializer.toJson(headers)
         );
 
         log.info("Published COMPENSATED saga reply for saga {} step {}", sagaId, sagaStep);
-    }
-
-    private String toJson(Map<String, String> map) {
-        try {
-            return objectMapper.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize headers to JSON", e);
-            return null;
-        }
     }
 }

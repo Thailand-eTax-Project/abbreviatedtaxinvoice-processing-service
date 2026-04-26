@@ -1,8 +1,8 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config;
 
 import com.wpanther.abbreviatedtaxinvoice.processing.application.service.SagaCommandHandler;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.CompensateAbbreviatedTaxInvoiceCommand;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;

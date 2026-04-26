@@ -1,9 +1,9 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wpanther.saga.domain.enums.SagaStep;
 import com.wpanther.saga.infrastructure.outbox.OutboxService;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.AbbreviatedTaxInvoiceReplyEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config.HeaderSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,20 +22,20 @@ class SagaReplyPublisherTest {
     private OutboxService outboxService;
 
     @Mock
-    private ObjectMapper objectMapper;
+    private HeaderSerializer headerSerializer;
 
     private SagaReplyPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new SagaReplyPublisher(outboxService, objectMapper);
+        publisher = new SagaReplyPublisher(outboxService, headerSerializer);
     }
 
     @Test
     void testPublishSuccessCallsOutboxWithCorrectParameters() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"SUCCESS\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"SUCCESS\"}");
 
-        publisher.publishSuccess("saga-1", "process-abbreviated-tax-invoice", "corr-1");
+        publisher.publishSuccess("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1");
 
         verify(outboxService).saveWithRouting(
             any(AbbreviatedTaxInvoiceReplyEvent.class),
@@ -49,9 +49,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishSuccessUsesSagaIdAsPartitionKey() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(headerSerializer.toJson(any())).thenReturn("{}");
 
-        publisher.publishSuccess("my-saga-id", "step-1", "corr-1");
+        publisher.publishSuccess("my-saga-id", SagaStep.SIGN_XML, "corr-1");
 
         ArgumentCaptor<String> partitionKeyCaptor = ArgumentCaptor.forClass(String.class);
         verify(outboxService).saveWithRouting(
@@ -65,9 +65,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishFailureCallsOutboxWithCorrectParameters() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"FAILURE\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"FAILURE\"}");
 
-        publisher.publishFailure("saga-1", "process-abbreviated-tax-invoice", "corr-1", "Parse error");
+        publisher.publishFailure("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1", "Parse error");
 
         verify(outboxService).saveWithRouting(
             any(AbbreviatedTaxInvoiceReplyEvent.class),
@@ -81,9 +81,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishCompensatedCallsOutboxWithCorrectParameters() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"COMPENSATED\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"COMPENSATED\"}");
 
-        publisher.publishCompensated("saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1");
+        publisher.publishCompensated("saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1");
 
         verify(outboxService).saveWithRouting(
             any(AbbreviatedTaxInvoiceReplyEvent.class),
@@ -97,9 +97,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishSuccessHeadersContainCorrectFields() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"SUCCESS\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"sagaId\":\"saga-1\",\"correlationId\":\"corr-1\",\"status\":\"SUCCESS\"}");
 
-        publisher.publishSuccess("saga-1", "step-1", "corr-1");
+        publisher.publishSuccess("saga-1", SagaStep.SIGN_XML, "corr-1");
 
         ArgumentCaptor<String> headersCaptor = ArgumentCaptor.forClass(String.class);
         verify(outboxService).saveWithRouting(any(), any(), any(), any(), any(), headersCaptor.capture());
@@ -112,10 +112,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testToJsonErrorReturnsNull() throws Exception {
-        when(objectMapper.writeValueAsString(any()))
-            .thenThrow(new JsonProcessingException("JSON error") {});
+        when(headerSerializer.toJson(any())).thenReturn(null);
 
-        publisher.publishSuccess("saga-1", "step-1", "corr-1");
+        publisher.publishSuccess("saga-1", SagaStep.SIGN_PDF, "corr-1");
 
         ArgumentCaptor<String> headersCaptor = ArgumentCaptor.forClass(String.class);
         verify(outboxService).saveWithRouting(any(), any(), any(), any(), any(), headersCaptor.capture());
@@ -125,9 +124,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishReplyEventHasCorrectTopic() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(headerSerializer.toJson(any())).thenReturn("{}");
 
-        publisher.publishSuccess("saga-1", "step-1", "corr-1");
+        publisher.publishSuccess("saga-1", SagaStep.SIGN_XML, "corr-1");
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         verify(outboxService).saveWithRouting(any(), any(), any(), topicCaptor.capture(), any(), any());
@@ -137,9 +136,9 @@ class SagaReplyPublisherTest {
 
     @Test
     void testPublishReplyEventHasCorrectAggregateType() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(headerSerializer.toJson(any())).thenReturn("{}");
 
-        publisher.publishFailure("saga-1", "step-1", "corr-1", "error");
+        publisher.publishFailure("saga-1", SagaStep.SIGN_PDF, "corr-1", "error");
 
         ArgumentCaptor<String> aggregateTypeCaptor = ArgumentCaptor.forClass(String.class);
         verify(outboxService).saveWithRouting(any(), aggregateTypeCaptor.capture(), any(), any(), any(), any());

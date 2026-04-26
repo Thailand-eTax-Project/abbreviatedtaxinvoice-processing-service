@@ -1,9 +1,8 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wpanther.saga.infrastructure.outbox.OutboxService;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.AbbreviatedTaxInvoiceProcessedEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.application.dto.event.AbbreviatedTaxInvoiceProcessedEvent;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config.HeaderSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,13 +26,13 @@ class EventPublisherTest {
     private OutboxService outboxService;
 
     @Mock
-    private ObjectMapper objectMapper;
+    private HeaderSerializer headerSerializer;
 
     private EventPublisher eventPublisher;
 
     @BeforeEach
     void setUp() {
-        eventPublisher = new EventPublisher(outboxService, objectMapper);
+        eventPublisher = new EventPublisher(outboxService, headerSerializer);
     }
 
     @Test
@@ -47,7 +46,7 @@ class EventPublisherTest {
             "correlation-123"
         );
 
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"correlationId\":\"correlation-123\",\"invoiceNumber\":\"ABR-001\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"correlationId\":\"correlation-123\",\"invoiceNumber\":\"ABR-001\"}");
 
         // When
         eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event);
@@ -74,7 +73,7 @@ class EventPublisherTest {
             "correlation-123"
         );
 
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"correlationId\":\"correlation-123\",\"invoiceNumber\":\"ABR-001\"}");
+        when(headerSerializer.toJson(any())).thenReturn("{\"correlationId\":\"correlation-123\",\"invoiceNumber\":\"ABR-001\"}");
 
         // When
         eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event);
@@ -92,7 +91,7 @@ class EventPublisherTest {
     }
 
     @Test
-    void testToJsonError() throws Exception {
+    void testToJsonErrorThrowsIllegalStateException() throws Exception {
         // Given
         AbbreviatedTaxInvoiceProcessedEvent event = new AbbreviatedTaxInvoiceProcessedEvent(
             "invoice-123",
@@ -102,20 +101,12 @@ class EventPublisherTest {
             "correlation-123"
         );
 
-        when(objectMapper.writeValueAsString(any()))
-            .thenThrow(new JsonProcessingException("JSON error") {});
+        when(headerSerializer.toJson(any()))
+            .thenThrow(new IllegalStateException("Failed to serialize"));
 
-        // When
-        eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event);
-
-        // Then
-        ArgumentCaptor<String> headersCaptor = ArgumentCaptor.forClass(String.class);
-        verify(outboxService).saveWithRouting(
-            any(), any(), any(), any(), any(),
-            headersCaptor.capture()
-        );
-
-        assertNull(headersCaptor.getValue());
+        // When / Then
+        assertThrows(IllegalStateException.class,
+            () -> eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event));
     }
 
     @Test
@@ -129,7 +120,7 @@ class EventPublisherTest {
             "correlation-123"
         );
 
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(headerSerializer.toJson(any())).thenReturn("{}");
 
         // When
         eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event);
@@ -151,7 +142,7 @@ class EventPublisherTest {
             "correlation-456"
         );
 
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(headerSerializer.toJson(any())).thenReturn("{}");
 
         // When
         eventPublisher.publishAbbreviatedTaxInvoiceProcessed(event);

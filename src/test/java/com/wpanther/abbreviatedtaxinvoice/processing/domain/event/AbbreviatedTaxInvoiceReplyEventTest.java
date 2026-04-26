@@ -1,6 +1,7 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.domain.event;
 
 import com.wpanther.saga.domain.enums.ReplyStatus;
+import com.wpanther.saga.domain.enums.SagaStep;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,7 +11,7 @@ class AbbreviatedTaxInvoiceReplyEventTest {
     @Test
     void testSuccessReply() {
         AbbreviatedTaxInvoiceReplyEvent reply = AbbreviatedTaxInvoiceReplyEvent.success(
-            "saga-1", "process-abbreviated-tax-invoice", "corr-1"
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1"
         );
 
         assertTrue(reply.isSuccess());
@@ -19,14 +20,14 @@ class AbbreviatedTaxInvoiceReplyEventTest {
         assertEquals(ReplyStatus.SUCCESS, reply.getStatus());
         assertNull(reply.getErrorMessage());
         assertEquals("saga-1", reply.getSagaId());
-        assertEquals("process-abbreviated-tax-invoice", reply.getSagaStep());
+        assertEquals(SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, reply.getSagaStep());
         assertEquals("corr-1", reply.getCorrelationId());
     }
 
     @Test
     void testFailureReply() {
         AbbreviatedTaxInvoiceReplyEvent reply = AbbreviatedTaxInvoiceReplyEvent.failure(
-            "saga-1", "process-abbreviated-tax-invoice", "corr-1", "Parse error"
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1", "Parse error"
         );
 
         assertFalse(reply.isSuccess());
@@ -40,7 +41,7 @@ class AbbreviatedTaxInvoiceReplyEventTest {
     @Test
     void testCompensatedReply() {
         AbbreviatedTaxInvoiceReplyEvent reply = AbbreviatedTaxInvoiceReplyEvent.compensated(
-            "saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1"
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1"
         );
 
         assertFalse(reply.isSuccess());
@@ -53,7 +54,7 @@ class AbbreviatedTaxInvoiceReplyEventTest {
     @Test
     void testInheritedFields() {
         AbbreviatedTaxInvoiceReplyEvent reply = AbbreviatedTaxInvoiceReplyEvent.success(
-            "saga-1", "step-1", "corr-1"
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1"
         );
 
         assertNotNull(reply.getEventId());
@@ -64,10 +65,10 @@ class AbbreviatedTaxInvoiceReplyEventTest {
     @Test
     void testDifferentSagaIds() {
         AbbreviatedTaxInvoiceReplyEvent reply1 = AbbreviatedTaxInvoiceReplyEvent.success(
-            "saga-1", "step-1", "corr-1"
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1"
         );
         AbbreviatedTaxInvoiceReplyEvent reply2 = AbbreviatedTaxInvoiceReplyEvent.success(
-            "saga-2", "step-1", "corr-2"
+            "saga-2", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-2"
         );
 
         assertNotEquals(reply1.getSagaId(), reply2.getSagaId());

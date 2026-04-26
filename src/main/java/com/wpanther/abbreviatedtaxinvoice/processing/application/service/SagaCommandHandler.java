@@ -1,7 +1,7 @@
 package com.wpanther.abbreviatedtaxinvoice.processing.application.service;
 
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.CompensateAbbreviatedTaxInvoiceCommand;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.model.ProcessedAbbreviatedTaxInvoice;
 import com.wpanther.abbreviatedtaxinvoice.processing.domain.repository.ProcessedAbbreviatedTaxInvoiceRepository;
 import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.messaging.SagaReplyPublisher;

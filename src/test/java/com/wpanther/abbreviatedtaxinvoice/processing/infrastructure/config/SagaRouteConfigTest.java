@@ -3,8 +3,9 @@ package com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.wpanther.abbreviatedtaxinvoice.processing.application.service.SagaCommandHandler;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.CompensateAbbreviatedTaxInvoiceCommand;
-import com.wpanther.abbreviatedtaxinvoice.processing.domain.event.ProcessAbbreviatedTaxInvoiceCommand;
+import com.wpanther.saga.domain.enums.SagaStep;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.CompensateAbbreviatedTaxInvoiceCommand;
+import com.wpanther.abbreviatedtaxinvoice.processing.infrastructure.adapter.in.messaging.dto.ProcessAbbreviatedTaxInvoiceCommand;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.Route;
@@ -81,7 +82,7 @@ class SagaRouteConfigTest {
     void shouldProcessSagaCommand() throws Exception {
         // Given
         ProcessAbbreviatedTaxInvoiceCommand command = new ProcessAbbreviatedTaxInvoiceCommand(
-            "saga-1", "process-abbreviated-tax-invoice", "corr-1",
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1",
             "doc-1", "<xml>test</xml>", "ABR-001"
         );
         String json = objectMapper.writeValueAsString(command);
@@ -98,7 +99,7 @@ class SagaRouteConfigTest {
     void shouldProcessCompensationCommand() throws Exception {
         // Given
         CompensateAbbreviatedTaxInvoiceCommand command = new CompensateAbbreviatedTaxInvoiceCommand(
-            "saga-1", "COMPENSATE_process-abbreviated-tax-invoice", "corr-1",
+            "saga-1", SagaStep.PROCESS_ABBREVIATED_TAX_INVOICE, "corr-1",
             "process-abbreviated-tax-invoice", "doc-1", "abbreviated-tax-invoice"
         );
         String json = objectMapper.writeValueAsString(command);
