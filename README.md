@@ -140,7 +140,7 @@ Represents a processed abbreviated tax invoice with:
 ### Application Properties
 
 Key configurations in `application.yml`:
-- **Server port**: 8094
+- **Server port**: 8087
 - **Flyway migrations**: `classpath:db/migration`
 - **Camel retry**: 3 max redeliveries with exponential backoff
 - **Kafka consumers**: 3 consumers per topic, 100 max poll records
@@ -272,7 +272,7 @@ This service depends on:
 
 | Service | Port | Relationship |
 |---------|------|--------------|
-| orchestrator-service | 8093 | Sends commands, receives replies |
-| notification-service | 8085 | Receives `abbreviated.taxinvoice.processed` events |
-| xml-signing-service | 8086 | Consumes processed events (future) |
-| pdf-signing-service | 8087 | Consumes processed events (future) |
+| orchestrator-service | 8100 | Sends commands, receives replies |
+| notification-service | 8099 | Receives `abbreviated.taxinvoice.processed` events |
+| xml-signing-service | 8088 | Consumes processed events (future) |
+| pdf-signing-service | 8089 | Consumes processed events (future) |
